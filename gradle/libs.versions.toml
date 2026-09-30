@@ -121,7 +121,7 @@ aptabase = "0.0.8"
 # Testing
 junit = "4.13.2"
 leakcanary = "2.14"
-mockk = "1.13.13"
+mockk = "1.14.11"
 
 # Baseline Profile
 baselineprofile = "1.5.0-alpha03"
