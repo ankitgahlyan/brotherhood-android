@@ -9,7 +9,6 @@ import com.tonapps.blockchain.model.legacy.WalletType
 import com.tonapps.core.flags.RemoteConfig
 import com.tonapps.core.flags.AddMcWalletTooltipInteractor
 import com.tonapps.icu.Coins
-import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.log.L
 import com.tonapps.network.NetworkMonitor
 import com.tonapps.tonkeeper.Environment
@@ -76,6 +75,7 @@ class WalletViewModel(
     private val environment: Environment,
     private val collectiblesRepository: CollectiblesRepository,
     private val pluginsRepository: PluginsRepository,
+    @Suppress("UnusedPrivateProperty")
     private val stakingRepository: StakingRepository,
     private val bannerRepository: BannerRepository,
     private val addMcWalletTooltip: AddMcWalletTooltipInteractor,
@@ -474,29 +474,13 @@ class WalletViewModel(
         _statusFlow.tryEmit(status)
     }
 
+    @Suppress("UnusedPrivateMember")
     private suspend fun getMaxStakingApy(
         wallet: WalletEntity,
         ignoreCache: Boolean = false,
-    ): String? = withContext(Dispatchers.IO) {
-        if (wallet.testnet) {
-            return@withContext null
-        }
-        try {
-            val staking = stakingRepository.get(
-                accountId = wallet.accountId,
-                network = wallet.network,
-                ignoreCache = ignoreCache,
-                initializedAccount = wallet.initialized,
-            )
-            val enabledStaking = api.getConfig(wallet.network).enabledStaking
-            val maxApy = staking.pools
-                .filter { enabledStaking.contains(it.implementation.title) }
-                .maxOfOrNull { it.apy }
-                ?: return@withContext null
-            CurrencyFormatter.formatPercent(maxApy).toString()
-        } catch (e: Throwable) {
-            null
-        }
+    ): String? {
+        // Staking is disabled in BrotherHood Wallet per product specification
+        return null
     }
 
     private suspend fun getBatteryBalance(

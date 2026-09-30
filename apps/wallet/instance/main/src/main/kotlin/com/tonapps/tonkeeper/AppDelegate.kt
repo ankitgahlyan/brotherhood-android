@@ -73,6 +73,7 @@ import com.tonapps.wallet.data.settings.SettingsRepository
 import com.tonapps.wallet.data.staking.stakingModule
 import com.tonapps.wallet.data.swap.swapModule
 import com.tonapps.wallet.data.token.tokenModule
+import com.tonapps.wallet.features.brotherhood.brotherhoodFeaturesModule
 import com.tonapps.wallet.features.events.eventsFeatureModule
 import com.tonapps.wc.WcInitializer
 import com.tonapps.wc.models.WcWalletConfig
@@ -132,6 +133,7 @@ class AppDelegate : App(), CameraXConfig.Provider, KoinComponent, SingletonImage
             modules(
                 koinModel,
                 brotherhoodDataModule,
+                brotherhoodFeaturesModule,
                 contactsModule,
                 workerModule,
                 dAppsModule,

@@ -66,6 +66,7 @@ dependencies {
     implementation(projects.apps.wallet.data.multichain.exchange)
 
     implementation(projects.apps.wallet.features.core)
+    implementation(projects.apps.wallet.features.brotherhood)
     implementation(projects.apps.wallet.features.onboarding)
     implementation(projects.apps.wallet.features.ramp)
     implementation(projects.apps.wallet.data.features)

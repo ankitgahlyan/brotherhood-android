@@ -14,6 +14,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:visibility="gone"
         app:menu="@menu/bottom_tabs"/>
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/brotherhood_overlay_compose"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </FrameLayout>

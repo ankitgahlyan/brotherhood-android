@@ -176,6 +176,7 @@ include(
     ":apps:wallet:features:migration",
     ":apps:wallet:features:perps",
     ":apps:wallet:features:events",
+    ":apps:wallet:features:brotherhood",
     ":apps:wallet:features:embeded:scanner",
 
     ":kmp:core",

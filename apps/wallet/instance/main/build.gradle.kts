@@ -158,6 +158,7 @@ dependencies {
 //    debugImplementation(libs.leakcanary)
 
     implementation(projects.apps.wallet.features.core)
+    implementation(projects.apps.wallet.features.brotherhood)
     implementation(projects.apps.wallet.features.events)
     implementation(projects.apps.wallet.features.trading)
     implementation(projects.apps.wallet.features.portfolio)
