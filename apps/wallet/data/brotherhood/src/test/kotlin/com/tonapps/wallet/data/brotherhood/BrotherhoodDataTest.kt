@@ -108,6 +108,10 @@ private class FakeBrotherhoodDao : BrotherhoodDao {
         return MutableStateFlow(tokenMetaMap.values.toList())
     }
 
+    override suspend fun getAllTokenMetadata(): List<TokenMetadataCacheEntity> {
+        return tokenMetaMap.values.toList()
+    }
+
     override suspend fun upsertTokenMetadata(entity: TokenMetadataCacheEntity) {
         tokenMetaMap[entity.minterAddress] = entity
     }
@@ -349,6 +353,108 @@ class BrotherhoodDataTest {
         assertNotNull(contact)
         assertEquals(fiWalletAddress, contact!!.fiWalletAddress)
         assertEquals(1, telemetry.snapshot.value.providerMetrics[RpcProvider.TONCENTER_V3]?.totalRequests?.toInt())
+    }
+
+    @Test
+    fun `BrotherhoodTokenWhitelist allows Native TON, FOSSFI, and Personal Tokens while excluding non-ecosystem tokens`() = runBlocking {
+        val dao = FakeBrotherhoodDao()
+        val whitelist = com.tonapps.wallet.data.brotherhood.token.BrotherhoodTokenWhitelist(dao)
+        val personalMinterAddr = "0:1111111111111111111111111111111111111111111111111111111111111111"
+        dao.upsertTrackedPersonalToken(
+            TrackedPersonalTokenEntity(
+                minterAddress = personalMinterAddr,
+                ownerWalletAddress = BrotherhoodConfig.DAO_PROXY_ADDRESS.toAccountId(),
+                ownerFiWalletAddress = BrotherhoodConfig.FI_ADDRESS.toAccountId(),
+                userPersonalWalletAddress = personalMinterAddr,
+                name = "Alice Token",
+                symbol = "ALICE",
+                imageUrl = null,
+                totalSupplyRaw = "1000000000",
+                userBalanceRaw = "500000000",
+                isAdminReferenceStablecoin = false,
+                updatedAtMs = System.currentTimeMillis(),
+            ),
+        )
+
+        assertTrue(whitelist.isWhitelistedToken("TON"))
+        assertTrue(whitelist.isWhitelistedToken(BrotherhoodConfig.FI_ADDRESS.toAccountId()))
+        assertTrue(whitelist.isWhitelistedToken(personalMinterAddr))
+        assertTrue(
+            whitelist.isWhitelistedToken(
+                tokenAddress = "0:2222222222222222222222222222222222222222222222222222222222222222",
+                codeHashHex = KnownCodeHashes.PERSONAL_MINTER,
+            ),
+        )
+        assertEquals(
+            false,
+            whitelist.isWhitelistedToken("0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe"),
+        )
+    }
+
+    @Test
+    fun `BrotherhoodHistoryEnricher decodes opcodes, badges, and TVM exit codes`() {
+        val enriched = com.tonapps.wallet.data.brotherhood.history.BrotherhoodHistoryEnricher.enrichSmartContractExecution(
+            operation = "0x00001147",
+            payload = null,
+            executorAddress = BrotherhoodConfig.FI_ADDRESS.toAccountId(),
+            fallbackTitle = "Call contract",
+            fallbackSubtitle = "0:860c...b25c",
+            isFailed = true,
+            failureDescription = "Compute phase failed with exit code: 407",
+        )
+        assertEquals("Buy Credit", enriched.title)
+        assertEquals("Brotherhood Member", enriched.contextBadge)
+        assertEquals("0x00001147", enriched.opcodeHex)
+        assertEquals("Exit 407: Bid Too Low", enriched.failureWarning)
+    }
+
+    @Test
+    fun `BrotherhoodRecipientResolver resolves citizen usernames and SpendAllowance intents`() = runBlocking {
+        val dao = FakeBrotherhoodDao()
+        val telemetry = createInMemoryTelemetry()
+        val hydrator = AccountStateHydrator(
+            dao = dao,
+            rateLimiter = ProviderRateLimiter(telemetry),
+            telemetryRepository = telemetry,
+            transport = ToncenterV3Transport { _, _ -> emptyList() },
+            debounceWindowMs = 0L,
+        )
+        val ownerWallet = BrotherhoodConfig.DAO_PROXY_ADDRESS.toAccountId()
+        val fiWallet = ShardedAddressDerivation.deriveFiWallet(BrotherhoodConfig.DAO_PROXY_ADDRESS).address.toAccountId()
+        dao.upsertContact(
+            AddressBookCacheEntity(
+                fiWalletAddress = fiWallet,
+                ownerAddress = ownerWallet,
+                username = "ankit",
+                h3Cell = "813d3ffffffffff",
+                countryCode = 356,
+                isActive = true,
+                isAuthority = false,
+                personalMinterAddress = null,
+                relationType = "circle",
+                updatedAtMs = System.currentTimeMillis(),
+            ),
+        )
+
+        val brotherhoodRepo = com.tonapps.wallet.data.brotherhood.repo.BrotherhoodRepository(dao, hydrator)
+        val dnsRepo = com.tonapps.wallet.data.brotherhood.repo.BroDnsRepository(dao, hydrator)
+        val resolver = com.tonapps.wallet.data.brotherhood.send.BrotherhoodRecipientResolver(brotherhoodRepo, dnsRepo)
+
+        val resolved = resolver.resolveRecipient("@ankit")
+        assertNotNull(resolved)
+        assertEquals(ownerWallet, resolved!!.walletAddressRaw)
+        assertEquals("@ankit", resolved.displayLabel)
+        assertEquals(com.tonapps.wallet.data.brotherhood.send.ResolvedRecipientType.CITIZEN_USERNAME, resolved.type)
+
+        val allowanceIntent = resolver.buildDelegatedSpendAllowanceSendIntent(
+            granterOwnerWalletAddress = ownerWallet,
+            recipientOwnerWalletAddress = ownerWallet,
+            amountRaw = BigInteger.valueOf(25_000_000_000L),
+        )
+        assertEquals(1, allowanceIntent.messages.size)
+        val op = BrotherhoodOpcodes.decodeOpcodeFromCell(allowanceIntent.messages.first().payloadCell)
+        assertNotNull(op)
+        assertEquals(BrotherhoodOpcodes.SPEND_ALLOWANCE, op!!.opcode)
     }
 
     private fun buildSampleFiWalletCell(username: String) = CellBuilder.createCell {

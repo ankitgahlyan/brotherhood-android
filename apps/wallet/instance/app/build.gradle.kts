@@ -34,11 +34,13 @@ dependencies {
     implementation(projects.kmp.async)
 
     implementation(projects.lib.bus)
+    implementation(projects.lib.brotherhood)
 
     implementation(projects.apps.wallet.localization)
     implementation(projects.apps.wallet.api)
 
     implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.brotherhood)
     implementation(projects.apps.wallet.data.tokens)
     implementation(projects.apps.wallet.data.account)
     implementation(projects.apps.wallet.data.settings)

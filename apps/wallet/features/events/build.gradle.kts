@@ -41,6 +41,8 @@ dependencies {
     implementation(projects.lib.blockchain)
     implementation(projects.lib.icu)
     implementation(projects.lib.network)
+    implementation(projects.lib.brotherhood)
+    implementation(projects.apps.wallet.data.brotherhood)
 
     implementation(projects.ui.uikit.core)
 }

@@ -20,7 +20,6 @@ import com.tonapps.blockchain.ton.extensions.base64
 import com.tonapps.blockchain.ton.extensions.equalsAddress
 import com.tonapps.blockchain.ton.extensions.isValidTonAddress
 import com.tonapps.blockchain.tron.TronTransfer
-import com.tonapps.blockchain.tron.isValidTronAddress
 import com.tonapps.bus.core.AnalyticsHelper
 import com.tonapps.core.helper.TransactionSentAnalytics
 import com.tonapps.core.helper.analyticsAssetId
@@ -68,6 +67,7 @@ import com.tonapps.wallet.data.account.AccountRepository
 import com.tonapps.wallet.data.battery.BatteryMapper
 import com.tonapps.wallet.data.battery.BatteryRepository
 import com.tonapps.wallet.data.battery.entity.BatteryBalanceEntity
+import com.tonapps.wallet.data.brotherhood.send.BrotherhoodRecipientResolver
 import com.tonapps.wallet.data.collectibles.CollectiblesRepository
 import com.tonapps.wallet.data.collectibles.entities.NftEntity
 import com.tonapps.wallet.data.rates.RatesRepository
@@ -114,6 +114,7 @@ import java.util.concurrent.CancellationException
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("LargeClass")
 @OptIn(FlowPreview::class)
 class SendViewModel(
     app: Application,
@@ -130,7 +131,8 @@ class SendViewModel(
     private val transactionManager: TransactionManager,
     private val emulationUseCase: EmulationUseCase,
     private val signUseCase: SignUseCase,
-    private val analytics: AnalyticsHelper
+    private val analytics: AnalyticsHelper,
+    private val brotherhoodRecipientResolver: BrotherhoodRecipientResolver,
 ) : BaseWalletVM(app) {
 
     private val isNft: Boolean
@@ -140,7 +142,7 @@ class SendViewModel(
         get() = settingsRepository.installId
 
     val isTronDisabled: Boolean
-        get() = api.getConfig(wallet.network).flags.disableTron
+        get() = true
 
     val isBatteryDisabled: Boolean
         get() = api.getConfig(wallet.network).flags.disableBattery
@@ -200,8 +202,8 @@ class SendViewModel(
     private val _tokensFlow = MutableStateFlow<List<AccountTokenEntity>?>(null)
     private val tokensFlow = _tokensFlow.asStateFlow().filterNotNull()
 
-    val tronAvailableFlow = tokensFlow.map { tokens ->
-        tokens.any { it.blockchain == Blockchain.TRON }
+    val tronAvailableFlow = tokensFlow.map {
+        false
     }.flowOn(Dispatchers.IO).state(viewModelScope)
 
     private val selectedTokenFlow = combine(
@@ -215,31 +217,12 @@ class SendViewModel(
 
     val destinationFlow = combine(
         userInputAddressFlow,
-        tronAvailableFlow,
         selectedTokenFlow
-    ) { userInput, isTronAvailable, selectedToken ->
+    ) { userInput, _ ->
         if (userInput.isEmpty()) {
             SendDestination.Empty
-        } else if (isTronAvailable && userInput.isValidTronAddress()) {
-            if (selectedToken.blockchain == Blockchain.TRON) {
-                SendDestination.TronAccount(userInput)
-            } else {
-                SendDestination.TokenError(
-                    addressBlockchain = Blockchain.TRON,
-                    selectedToken = selectedToken.token
-                )
-            }
         } else {
-            val destination = getDestinationAccount(userInput)
-
-            if (destination is SendDestination.TonAccount && selectedToken.blockchain == Blockchain.TRON) {
-                SendDestination.TokenError(
-                    addressBlockchain = Blockchain.TON,
-                    selectedToken = selectedToken.token
-                )
-            } else {
-                destination
-            }
+            getDestinationAccount(userInput)
         }
     }.flowOn(Dispatchers.IO).stateIn(viewModelScope, SharingStarted.Eagerly, SendDestination.Empty)
 
@@ -568,13 +551,16 @@ class SendViewModel(
     }
 
     private suspend fun getDestinationAccount(userInput: String) = withContext(Dispatchers.IO) {
-        val tonAddressTags = TonAddressTags.of(userInput)
+        val resolvedBrotherhood = brotherhoodRecipientResolver.resolveRecipient(userInput)
+        val effectiveQuery = resolvedBrotherhood?.walletAddressRaw ?: userInput
+
+        val tonAddressTags = TonAddressTags.of(effectiveQuery)
         if (tonAddressTags.userFriendly && tonAddressTags.isTestnet != wallet.testnet) {
             return@withContext SendDestination.NotFound
         }
 
-        val accountDeferred = async { api.resolveAccount(userInput, wallet.network) }
-        val publicKeyDeferred = async { api.safeGetPublicKey(userInput, wallet.network) }
+        val accountDeferred = async { api.resolveAccount(effectiveQuery, wallet.network) }
+        val publicKeyDeferred = async { api.safeGetPublicKey(effectiveQuery, wallet.network) }
 
         val account = accountDeferred.await() ?: return@withContext SendDestination.NotFound
         val publicKey = publicKeyDeferred.await()
@@ -585,7 +571,7 @@ class SendViewModel(
 
         SendDestination.TonAccount(
             userInput = userInput,
-            isUserInputAddress = userInput.isValidTonAddress(),
+            isUserInputAddress = effectiveQuery.isValidTonAddress(),
             publicKey = publicKey,
             account = account,
             testnet = wallet.testnet,

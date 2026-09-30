@@ -52,6 +52,7 @@ import com.tonapps.wallet.data.account.accountModule
 import com.tonapps.wallet.data.backup.backupModule
 import com.tonapps.wallet.data.banner.bannerModule
 import com.tonapps.wallet.data.battery.batteryModule
+import com.tonapps.wallet.data.brotherhood.brotherhoodDataModule
 import com.tonapps.wallet.data.browser.browserModule
 import com.tonapps.wallet.data.cache.cacheModule
 import com.tonapps.wallet.data.collectibles.collectiblesModule
@@ -130,6 +131,7 @@ class AppDelegate : App(), CameraXConfig.Provider, KoinComponent, SingletonImage
             androidContext(this@AppDelegate)
             modules(
                 koinModel,
+                brotherhoodDataModule,
                 contactsModule,
                 workerModule,
                 dAppsModule,

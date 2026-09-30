@@ -35,6 +35,9 @@ data class AccountTokenEntity(
     val isTon: Boolean
         get() = address == TokenEntity.TON.address
 
+    val isFossFi: Boolean
+        get() = balance.token.isFossFi
+
     val isTrx: Boolean
         get() = address == TokenEntity.TRX.address
 

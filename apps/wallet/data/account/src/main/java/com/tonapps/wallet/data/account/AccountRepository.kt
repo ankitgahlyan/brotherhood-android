@@ -3,7 +3,6 @@ package com.tonapps.wallet.data.account
 import android.app.KeyguardManager
 import android.content.Context
 import com.tonapps.async.Async
-import com.tonapps.blockchain.MnemonicHelper
 import com.tonapps.blockchain.contract.Blockchain
 import com.tonapps.blockchain.model.legacy.BlockchainAddress
 import com.tonapps.blockchain.model.legacy.MessageBodyEntity
@@ -47,7 +46,6 @@ import kotlinx.coroutines.withContext
 import org.ton.kotlin.crypto.PrivateKeyEd25519
 import org.ton.kotlin.crypto.PublicKeyEd25519
 import org.ton.contract.wallet.WalletTransfer
-import org.ton.kotlin.crypto.mnemonic.Mnemonic
 import java.math.BigInteger
 import java.util.UUID
 
@@ -178,7 +176,11 @@ class AccountRepository(
             emoji = RNWallet.fixEmoji(wallet.label.emoji),
             identifier = wallet.id,
             pubkey = wallet.publicKey.hex(),
-            network = if (wallet.testnet) RNWallet.Network.Testnet else RNWallet.Network.Mainnet,
+            network = if (wallet.testnet) {
+                RNWallet.Network.Testnet
+            } else {
+                RNWallet.Network.Mainnet
+            },
             type = type,
             version = walletVersion(wallet.version),
             workchain = wallet.contract.workchain,
@@ -282,13 +284,7 @@ class AccountRepository(
     }
 
     private suspend fun getTrxAccountsProvider(id: String): KeychainTrxAccountsProvider? {
-        val mnemonic = getMnemonic(id)?.toList() ?: return null
-        if (MnemonicHelper.isValidStandardTonMnemonic(mnemonic)) {
-            val entropy = Mnemonic(mnemonic).toEntropy()
-            return KeychainTrxAccountsProvider.fromEntropy(entropy)
-        } else {
-            return KeychainTrxAccountsProvider.fromMnemonic(mnemonic)
-        }
+        return null
     }
 
     suspend fun getTronMnemonic(id: String): Array<String>? {
@@ -349,7 +345,11 @@ class AccountRepository(
         qr: Boolean,
         initialized: List<Boolean>
     ): List<WalletEntity> {
-        val type = if (qr) WalletType.SignerQR else WalletType.Signer
+        val type = if (qr) {
+            WalletType.SignerQR
+        } else {
+            WalletType.Signer
+        }
         return addWallet(versions.map { newWalletId() }, label, publicKey, versions, type, initialized = initialized)
     }
 
@@ -425,7 +425,7 @@ class AccountRepository(
         mnemonic: List<String>
     ): WalletEntity {
         val publicKey = vaultSource.addMnemonic(mnemonic)
-        return addWallet(id, label, publicKey, WalletType.Default, WalletVersion.V5R1, new = true, initialized = false)
+        return addWallet(id, label, publicKey, WalletType.Testnet, WalletVersion.V5R1, new = true, initialized = false)
     }
 
     private suspend fun addWallet(
@@ -581,7 +581,11 @@ class AccountRepository(
         return messageBody(
             wallet = wallet,
             seqNo = seqNo,
-            validUntil = if (validUntil > 0) validUntil else getValidUntil(wallet.network),
+            validUntil = if (validUntil > 0) {
+                validUntil
+            } else {
+                getValidUntil(wallet.network)
+            },
             transfers = transfers
         )
     }

@@ -7,6 +7,7 @@ import com.tonapps.core.extensions.externalDrawableUrl
 import com.tonapps.extensions.locale
 import com.tonapps.icu.CurrencyFormatter
 import com.tonapps.uikit.icon.UIKitIcon
+import com.tonapps.wallet.data.brotherhood.history.BrotherhoodHistoryEnricher
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.events.tx.model.TxAction
@@ -138,7 +139,11 @@ class TxEventUiMapper(
                 feeFormatted = feeFormatted.takeIf { index == feeOwnerIndex }
             )
 
-            val badge = if (event.isTron) context.getString(Localization.trc20) else null
+            val badge = action.description ?: if (event.isTron) {
+                context.getString(Localization.trc20)
+            } else {
+                null
+            }
             val state = state(event, action)
 
             val title = if (isSpam) {
@@ -151,6 +156,13 @@ class TxEventUiMapper(
                 context.externalDrawableUrl(UIKitIcon.ic_exclamationmark_circle_28)
             } else {
                 context.externalDrawableUrl(action.type.iconRes)
+            }
+
+            val warningText = if (action.isFailed) {
+                BrotherhoodHistoryEnricher.decodeFailureWarning(action.subtitle)
+                    ?: context.getString(Localization.failed)
+            } else {
+                null
             }
 
             UiEvent.Item.Action(
@@ -167,8 +179,12 @@ class TxEventUiMapper(
                 text = action.text?.let {
                     text(event.hash, it)
                 },
-                warningText = if (action.isFailed) context.getString(Localization.failed) else null,
-                rightDescription = if (action.hasUnverifiedToken) context.getString(Localization.unverified_token) else null,
+                warningText = warningText,
+                rightDescription = if (action.hasUnverifiedToken) {
+                    context.getString(Localization.unverified_token)
+                } else {
+                    null
+                },
                 spam = isSpam,
                 position = uiPosition(index, event.actions.size)
             )
@@ -194,7 +210,13 @@ class TxEventUiMapper(
         val now = java.time.ZonedDateTime.now(zone)
         val shortMonth = DateTimeFormatter.ofPattern("MMM", locale).format(zdt).replace(".", "") + ","
         val month = if (locale.language == "en") {
-            shortMonth.replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
+            shortMonth.replaceFirstChar {
+                if (it.isLowerCase()) {
+                    it.titlecase(locale)
+                } else {
+                    it.toString()
+                }
+            }
         } else {
             shortMonth
         }

@@ -166,6 +166,7 @@ dependencies {
     implementation(projects.apps.wallet.features.ramp)
     implementation(projects.apps.wallet.features.dapp)
     implementation(projects.apps.wallet.data.core)
+    implementation(projects.apps.wallet.data.brotherhood)
     implementation(projects.apps.wallet.data.settings)
     implementation(projects.apps.wallet.data.passcode)
     implementation(projects.apps.wallet.data.staking)

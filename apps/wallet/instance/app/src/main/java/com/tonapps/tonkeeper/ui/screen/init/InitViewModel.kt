@@ -135,7 +135,7 @@ class InitViewModel(
 
     private var type = args.type
     private val testnet: Boolean
-        get() = type == InitArgs.Type.Testnet
+        get() = type == InitArgs.Type.Testnet || type == InitArgs.Type.New || type == InitArgs.Type.Import
     private val tetra: Boolean
         get() = type == InitArgs.Type.Tetra
     private val walletsCount = AtomicInteger(-1)
@@ -156,12 +156,10 @@ class InitViewModel(
         }
 
     private val isMultichainEnabled: Boolean
-        get() = WalletFeature.Multichain.isEnabled
-                && (api.getConfig(TonNetwork.MAINNET).flags.multichainEnabled || WalletFeature.Multichain.isOverridden)
+        get() = false
 
     private val isImportMultichainEnabled: Boolean
-        get() = WalletFeature.ImportMultichainWallet.isEnabled
-                && (api.getConfig(TonNetwork.MAINNET).flags.multichainEnabled || WalletFeature.ImportMultichainWallet.isOverridden)
+        get() = false
 
     private val _uiTopOffset = MutableStateFlow(0)
     val uiTopOffset = _uiTopOffset.asStateFlow()

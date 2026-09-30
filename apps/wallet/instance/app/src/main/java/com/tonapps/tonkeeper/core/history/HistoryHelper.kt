@@ -37,6 +37,7 @@ import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.blockchain.model.legacy.CommentEncryption
 import com.tonapps.wallet.api.extensions.toTokenEntity
+import com.tonapps.wallet.data.brotherhood.history.BrotherhoodHistoryEnricher
 import com.tonapps.wallet.data.events.EventsRepository
 import com.tonapps.wallet.data.passcode.PasscodeManager
 import com.tonapps.wallet.data.rates.RatesRepository
@@ -63,6 +64,7 @@ import java.util.Calendar
 import java.util.Locale
 
 // TODO request refactoring
+@Suppress("LargeClass", "BracesOnIfStatements", "MultiLineIfElse", "ClassOrdering", "CascadingCallWrapping")
 class HistoryHelper(
     private val context: Context,
     private val accountRepository: AccountRepository,
@@ -901,18 +903,33 @@ class HistoryHelper(
         } else if (action.smartContractExec != null) {
             val smartContractExec = action.smartContractExec!!
             val executor = smartContractExec.executor
+            val isFailed = action.status == Action.Status.failed
+            val enriched = BrotherhoodHistoryEnricher.enrichSmartContractExecution(
+                operation = smartContractExec.operation,
+                payload = smartContractExec.payload,
+                executorAddress = executor.address,
+                fallbackTitle = simplePreview.name,
+                fallbackSubtitle = executor.getNameOrAddress(wallet.testnet, true),
+                isFailed = isFailed,
+                failureDescription = simplePreview.description,
+            )
 
             val amount = Coins.of(smartContractExec.gramAttached)
             val value = CurrencyFormatter.format("TON", amount)
             val valueFullFormatted = CurrencyFormatter.formatFull("TON", amount, 9)
+            val commentText = listOfNotNull(
+                enriched.contextBadge?.let { "[$it]" },
+                enriched.failureWarning,
+            ).joinToString(" ").ifBlank { null }
 
             return HistoryItem.Event(
                 index = index,
                 txId = txId,
                 iconURL = executor.iconURL,
                 action = ActionType.CallContract,
-                title = simplePreview.name,
-                subtitle = executor.getNameOrAddress(wallet.testnet, true),
+                title = enriched.title,
+                subtitle = enriched.subtitle,
+                comment = commentText?.let { HistoryItem.Event.Comment(Type.Text, it) },
                 value = value.withMinus,
                 valueFullFormatted = valueFullFormatted.withMinus,
                 tokenCode = "TON",
@@ -922,7 +939,7 @@ class HistoryHelper(
                 isOut = true,
                 sender = HistoryItem.Account.ofSender(action, wallet.testnet),
                 recipient = HistoryItem.Account.ofRecipient(action, wallet.testnet),
-                failed = action.status == Action.Status.failed,
+                failed = isFailed,
                 isScam = isScam,
                 wallet = wallet,
                 actionOutStatus = ActionOutStatus.Any

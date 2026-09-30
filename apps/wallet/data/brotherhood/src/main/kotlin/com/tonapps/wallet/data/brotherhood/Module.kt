@@ -13,6 +13,8 @@ import com.tonapps.wallet.data.brotherhood.repo.CityNetworkRepository
 import com.tonapps.wallet.data.brotherhood.repo.DaoRepository
 import com.tonapps.wallet.data.brotherhood.repo.LotteryRepository
 import com.tonapps.wallet.data.brotherhood.repo.PersonalJettonRepository
+import com.tonapps.wallet.data.brotherhood.send.BrotherhoodRecipientResolver
+import com.tonapps.wallet.data.brotherhood.token.BrotherhoodTokenWhitelist
 import org.koin.dsl.module
 
 val brotherhoodDataModule = module {
@@ -43,4 +45,6 @@ val brotherhoodDataModule = module {
     single { DaoRepository(get(), get()) }
     single { LotteryRepository(get()) }
     single { BroDnsRepository(get(), get()) }
+    single { BrotherhoodTokenWhitelist(get()) }
+    single { BrotherhoodRecipientResolver(get(), get()) }
 }

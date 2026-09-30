@@ -17,6 +17,8 @@ dependencies {
     implementation(projects.lib.icu)
     implementation(projects.lib.security)
     implementation(projects.lib.sqlite)
+    implementation(projects.lib.brotherhood)
+    implementation(projects.apps.wallet.data.brotherhood)
 
     implementation(libs.koin.core)
 

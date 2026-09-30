@@ -15,6 +15,8 @@ dependencies {
     implementation(projects.lib.security)
     implementation(projects.lib.extensions)
     implementation(projects.lib.icu)
+    implementation(projects.lib.brotherhood)
+    implementation(projects.apps.wallet.data.brotherhood)
 
 
     implementation(libs.androidx.room.runtime)

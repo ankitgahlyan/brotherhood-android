@@ -15,6 +15,7 @@ import com.tonapps.blockchain.model.legacy.WalletCurrency
 import com.tonapps.wallet.data.events.ActionType
 import com.tonapps.wallet.data.events.getTonAmountRaw
 import com.tonapps.wallet.data.events.isOutTransfer
+import com.tonapps.wallet.data.brotherhood.history.BrotherhoodHistoryEnricher
 import com.tonapps.wallet.data.events.tx.model.TxAction
 import com.tonapps.wallet.data.events.tx.model.TxActionBody
 import com.tonapps.wallet.data.events.tx.model.TxEvent
@@ -93,7 +94,13 @@ internal class TxActionMapper(
     fun tronEvent(address: BlockchainAddress, event: TronEventEntity): TxEvent? {
         val currency = WalletCurrency.USDT_TRON
         val isOutgoing = event.from == address.value
-        val builder = TxActionBody.Builder(if (isOutgoing) ActionType.Send else ActionType.Received)
+        val builder = TxActionBody.Builder(
+            if (isOutgoing) {
+                ActionType.Send
+            } else {
+                ActionType.Received
+            }
+        )
         val isTestnet = address.network.isTestnet
         builder.setRecipient(TxActionBody.Account(
             address = event.to,
@@ -111,7 +118,11 @@ internal class TxActionMapper(
         }
         val action = TxAction(
             body = builder.build(),
-            status = if (event.isFailed) TxAction.Status.Failed else TxAction.Status.Ok,
+            status = if (event.isFailed) {
+                TxAction.Status.Failed
+            } else {
+                TxAction.Status.Ok
+            },
             isMaybeSpam = false
         )
 
@@ -349,7 +360,11 @@ internal class TxActionMapper(
     }
 
     private fun setSignatureAllowed(address: BlockchainAddress, action: SetSignatureAllowedAction): TxActionBody {
-        val type = if (action.allowed) ActionType.SetSignatureAllowed else ActionType.SetSignatureNotAllowed
+        val type = if (action.allowed) {
+            ActionType.SetSignatureAllowed
+        } else {
+            ActionType.SetSignatureNotAllowed
+        }
         val builder = TxActionBody.Builder(type)
         builder.setSender(account(action.wallet, address.network.isTestnet))
         return builder.build()
@@ -519,7 +534,13 @@ internal class TxActionMapper(
         val sender = action.sender?.let { account(it, address.network.isTestnet) }
         val recipient = action.recipient?.let { account(it, address.network.isTestnet) }
         val isOutgoing = sender?.address?.equalsAddress(address.value) == true
-        val builder = TxActionBody.Builder(if (isOutgoing) ActionType.NftSend else ActionType.NftReceived)
+        val builder = TxActionBody.Builder(
+            if (isOutgoing) {
+                ActionType.NftSend
+            } else {
+                ActionType.NftReceived
+            }
+        )
         sender?.let(builder::setSender)
         recipient?.let(builder::setRecipient)
         builder.setProduct(product)
@@ -538,8 +559,20 @@ internal class TxActionMapper(
     private fun smartContract(address: BlockchainAddress, action: SmartContractAction): TxActionBody {
         val amount = Coins.of(action.gramAttached)
         val builder = TxActionBody.Builder(ActionType.CallContract)
-        builder.setSender(account(action.executor, address.network.isTestnet))
-        builder.setSubtitle(action.payload ?: action.operation)
+        val executorAccount = account(action.executor, address.network.isTestnet)
+        val enriched = BrotherhoodHistoryEnricher.enrichSmartContractExecution(
+            operation = action.operation,
+            payload = action.payload,
+            executorAddress = action.executor.address,
+            fallbackTitle = "",
+            fallbackSubtitle = executorAccount.title,
+        )
+        if (enriched.title.isNotBlank()) {
+            builder.setTitle(enriched.title)
+        }
+        builder.setDescription(enriched.contextBadge)
+        builder.setSender(executorAccount)
+        builder.setSubtitle(enriched.subtitle)
         builder.setOutgoingAmount(amount)
         return builder.build()
     }
@@ -550,7 +583,13 @@ internal class TxActionMapper(
         val sender = account(action.sender, address.network.isTestnet)
         val recipient = account(action.recipient, address.network.isTestnet)
         val isOutgoing = sender.address.equalsAddress(address.value)
-        val builder = TxActionBody.Builder(if (isOutgoing) ActionType.Send else ActionType.Received)
+        val builder = TxActionBody.Builder(
+            if (isOutgoing) {
+                ActionType.Send
+            } else {
+                ActionType.Received
+            }
+        )
         builder.setSender(sender)
         builder.setRecipient(recipient)
         if (isOutgoing) {
@@ -572,7 +611,11 @@ internal class TxActionMapper(
         val isOutgoing = recipient?.let {
             !it.address.equalsAddress(address.value)
         } ?: false
-        val type = if (isOutgoing) ActionType.Send else ActionType.Received
+        val type = if (isOutgoing) {
+            ActionType.Send
+        } else {
+            ActionType.Received
+        }
         val builder = TxActionBody.Builder(type)
         sender?.let(builder::setSender)
         recipient?.let(builder::setRecipient)

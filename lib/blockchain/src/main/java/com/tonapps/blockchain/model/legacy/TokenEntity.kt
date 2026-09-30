@@ -55,6 +55,7 @@ data class TokenEntity(
         const val TON_TS_USDE = "0:d0e545323c7acb7102653c073377f7e3c67f122eb94d430a250739f109d4a57d"
 
         const val TON_SPYX = "0:757f204003da900cfe8b106685ddc6d4f976ebfa9e844816469ea94790720700"
+        const val TON_FOSSFI = "0:0bd77bb0b2e13c4fb8f1ebddbb0ffdbda6fec1da9bbbd27f17efae8eb3fe5af3"
 
         val TON = TokenEntity(
             blockchain = Blockchain.TON,
@@ -63,6 +64,19 @@ data class TokenEntity(
             symbol = "GRAM",
             imageUri = TON_ICON_URI,
             decimals = 9,
+            verification = Verification.whitelist,
+            isRequestMinting = false,
+            isTransferable = true,
+            customPayloadApiUri = null
+        )
+
+        val FOSSFI = TokenEntity(
+            blockchain = Blockchain.TON,
+            address = TON_FOSSFI,
+            name = "FossFi",
+            symbol = "FI",
+            imageUri = TON_ICON_URI,
+            decimals = 5,
             verification = Verification.whitelist,
             isRequestMinting = false,
             isTransferable = true,
@@ -139,7 +153,11 @@ data class TokenEntity(
                 Blockchain.TON -> "ton"
                 Blockchain.TRON -> "tron"
             }
-            val net = if (network.isMainnet) "mainnet" else "testnet"
+            val net = if (network.isMainnet) {
+                "mainnet"
+            } else {
+                "testnet"
+            }
             val isCoin = address == TON.address || address == TRX.address
             val type = when {
                 isCoin -> "coin"
@@ -203,7 +221,11 @@ data class TokenEntity(
         WalletCurrency(
             code = symbol,
             title = name,
-            chain = if (blockchain == Blockchain.TRON) Chain.TRON(address, decimals) else Chain.TON(address, decimals),
+            chain = if (blockchain == Blockchain.TRON) {
+                Chain.TRON(address, decimals)
+            } else {
+                Chain.TON(address, decimals)
+            },
             iconUrl = imageUri.toString(),
             isToken = tokenType != null,
             isFiat = false,
@@ -224,6 +246,11 @@ data class TokenEntity(
 
     val isTon: Boolean
         get() = address == TON.address
+
+    @IgnoredOnParcel
+    val isFossFi: Boolean by lazy {
+        address.equalsAddress(TON_FOSSFI)
+    }
 
     @IgnoredOnParcel
     val isUsdt: Boolean by lazy {

@@ -12,6 +12,8 @@ import com.tonapps.extensions.TimedCacheMemory
 import com.tonapps.icu.Coins
 import com.tonapps.wallet.api.API
 import com.tonapps.wallet.api.entity.EthenaEntity
+import com.tonapps.wallet.data.brotherhood.db.BrotherhoodDatabase
+import com.tonapps.wallet.data.brotherhood.token.BrotherhoodTokenWhitelist
 import com.tonapps.wallet.data.core.BlobDataSource
 import com.tonapps.wallet.data.rates.RatesRepository
 import com.tonapps.wallet.data.rates.entity.RatesEntity
@@ -41,12 +43,18 @@ class TokenRepository(
 
     private val localDataSource = LocalDataSource(context)
     private val remoteDataSource = RemoteDataSource(api)
+    private val brotherhoodWhitelist = BrotherhoodTokenWhitelist(
+        BrotherhoodDatabase.getInstance(context).brotherhoodDao()
+    )
 
     private val ethenaCache = BlobDataSource.simple<EthenaEntity>(context, "ethena")
 
     fun getToken(accountId: String, network: TonNetwork): TokenEntity? {
         if (accountId.equals("TON", ignoreCase = true)) {
             return TokenEntity.TON
+        }
+        if (accountId.equalsAddress(TokenEntity.TON_FOSSFI)) {
+            return TokenEntity.FOSSFI
         }
 
         return remoteDataSource.getJetton(accountId, network)
@@ -251,8 +259,8 @@ class TokenRepository(
             when {
                 first.isTon -> -1
                 second.isTon -> 1
-                first.isUsdt -> -1
-                second.isUsdt -> 1
+                first.isFossFi -> -1
+                second.isFossFi -> 1
                 else -> second.fiat.compareTo(first.fiat)
             }
         }
@@ -263,6 +271,8 @@ class TokenRepository(
             when {
                 first.isTon -> -1
                 second.isTon -> 1
+                first.isFossFi -> -1
+                second.isFossFi -> 1
                 else -> second.balance.value.compareTo(first.balance.value)
             }
         }
@@ -288,95 +298,58 @@ class TokenRepository(
         val tonBalanceDeferred = async { remoteDataSource.loadTON(currency, accountId, network) }
         val jettonsDeferred = async { remoteDataSource.loadJettons(currency, accountId, network) }
 
-        val tronUsdtDeferred = async {
-            if (tronAddress != null && network.isMainnet) {
-                remoteDataSource.loadTronUsdt(tronAddress)
-            } else {
-                null
-            }
-        }
-
-        val tronTrxDeferred = async {
-            if (tronAddress != null && network.isMainnet) {
-                remoteDataSource.loadTronTrx(tronAddress)
-            } else {
-                null
-            }
-        }
-
         val tonBalance = tonBalanceDeferred.await() ?: return@withContext null
-        val jettons = jettonsDeferred.await()?.toMutableList() ?: return@withContext null
-
-        var tronTrx = tronTrxDeferred.await()
-        var tronUsdt = tronUsdtDeferred.await()
-        if (tronTrx == null || tronUsdt == null) {
-            val cachedTron = cache(accountId, network)
-            tronTrx = tronTrx
-                ?: cachedTron?.firstOrNull { it.token.address.equalsAddress(TokenEntity.TRX.address) }
-            tronUsdt = tronUsdt
-                ?: cachedTron?.firstOrNull { it.token.address.equalsAddress(TokenEntity.TRON_USDT.address) }
-        }
-
-        val usdtIndex = jettons.indexOfFirst {
-            it.token.address == TokenEntity.USDT.address
-        }
-
-        val usdeIndex = jettons.indexOfFirst {
-            it.token.address == TokenEntity.USDE.address
-        }
-
-        val tsUsdeIndex = jettons.indexOfFirst {
-            it.token.address == TokenEntity.TS_USDE.address
-        }
+        val rawJettons = jettonsDeferred.await().orEmpty()
+        val trackedPersonalMinters = brotherhoodWhitelist.getTrackedPersonalMinterAddresses()
 
         val entities = mutableListOf<BalanceEntity>()
         entities.add(tonBalance)
 
-        if (tronTrx != null && tronTrx.value.isPositive) {
-            entities.add(tronTrx)
+        val fossFiIndex = rawJettons.indexOfFirst {
+            it.token.address.equalsAddress(TokenEntity.TON_FOSSFI)
         }
-
-        if (tronUsdt != null && tronUsdt.value.isPositive) {
-            entities.add(tronUsdt)
-        }
-
-        if (usdtIndex == -1 && !network.isTestnet) {
+        if (fossFiIndex >= 0) {
+            val existing = rawJettons[fossFiIndex]
+            entities.add(
+                existing.copy(
+                    token = existing.token.copy(
+                        name = "FossFi",
+                        symbol = "FI",
+                        verification = TokenEntity.Verification.whitelist,
+                    )
+                )
+            )
+        } else {
             entities.add(
                 BalanceEntity(
-                    token = TokenEntity.USDT,
+                    token = TokenEntity.FOSSFI,
                     value = Coins.ZERO,
                     walletAddress = accountId,
                     initializedAccount = tonBalance.initializedAccount,
                     isRequestMinting = false,
-                    isTransferable = true
+                    isTransferable = true,
                 )
-            )
-        } else if (usdtIndex >= 0) {
-            jettons[usdtIndex] = jettons[usdtIndex].copy(
-                token = TokenEntity.USDT
             )
         }
 
-        val shouldAddUsde = usdeIndex == -1 && (!api.getConfig(network).flags.disableUsde || tsUsdeIndex != -1)
-
-        if (shouldAddUsde && !network.isTestnet) {
-            entities.add(
-                BalanceEntity(
-                    token = TokenEntity.USDE,
-                    value = Coins.ZERO,
-                    walletAddress = accountId,
-                    initializedAccount = tonBalance.initializedAccount,
-                    isRequestMinting = false,
-                    isTransferable = true
+        for (jetton in rawJettons) {
+            if (jetton.token.address.equalsAddress(TokenEntity.TON_FOSSFI)) {
+                continue
+            }
+            val category = brotherhoodWhitelist.classifyAsset(
+                tokenAddress = jetton.token.address,
+                knownPersonalMinters = trackedPersonalMinters,
+            )
+            if (category == com.tonapps.wallet.data.brotherhood.token.BrotherhoodAssetCategory.PERSONAL_TOKEN) {
+                entities.add(
+                    jetton.copy(
+                        token = jetton.token.copy(
+                            verification = TokenEntity.Verification.whitelist
+                        )
+                    )
                 )
-            )
-        } else if (usdeIndex >= 0) {
-            jettons[usdeIndex] = jettons[usdeIndex].copy(
-                token = TokenEntity.USDE
-            )
+            }
         }
-
-        entities.addAll(jettons)
 
         updateRates(network, currency, listOf(TokenEntity.TON.symbol))
         bindRates(network, currency, entities)

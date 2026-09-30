@@ -56,6 +56,9 @@ interface BrotherhoodDao {
     @Query("SELECT * FROM brotherhood_token_metadata_cache ORDER BY symbol ASC")
     fun observeAllTokenMetadata(): Flow<List<TokenMetadataCacheEntity>>
 
+    @Query("SELECT * FROM brotherhood_token_metadata_cache ORDER BY symbol ASC")
+    suspend fun getAllTokenMetadata(): List<TokenMetadataCacheEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertTokenMetadata(entity: TokenMetadataCacheEntity)
 
