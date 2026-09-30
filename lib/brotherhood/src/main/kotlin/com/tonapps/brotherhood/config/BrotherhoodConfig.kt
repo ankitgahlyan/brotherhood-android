@@ -15,6 +15,7 @@ object BrotherhoodConfig {
     const val ZERO_ADDRESS_USER_FRIENDLY = "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c"
 
     val FI_ADDRESS: AddrStd by lazy { AddrStd(FI_ADDRESS_STR) }
+    val FI_ADDRESS_RAW: String by lazy { FI_ADDRESS.toAccountId() }
     val BRO_COLLECTION_RESOLVER: AddrStd by lazy { AddrStd(BRO_COLLECTION_RESOLVER_STR) }
     val BRO_TREASURY_ADDRESS: AddrStd by lazy { AddrStd(BRO_TREASURY_ADDRESS_STR) }
     val DAO_PROXY_ADDRESS: AddrStd by lazy { AddrStd(DAO_PROXY_ADDRESS_STR) }
@@ -51,6 +52,14 @@ object BrotherhoodConfig {
     const val DEPLOY_PERSONAL_MINTER_TON_NANO: Long = 500_000_000L // 0.5 TON
     const val LINK_PERSONAL_JETTON_GAS_NANO: Long = 200_000_000L // 0.2 TON
     const val FOLLOW_ACTION_GAS_NANO: Long = 300_000_000L // 0.3 TON
+    const val SIMPLE_WALLET_ACTION_GAS_NANO: Long = 200_000_000L // 0.2 TON
+    const val PERSONAL_MINT_GAS_NANO: Long = 350_000_000L // 0.35 TON
+    const val JETTON_TRANSFER_GAS_NANO: Long = 150_000_000L // 0.15 TON
+    const val DNS_ACTION_GAS_NANO: Long = 150_000_000L // 0.15 TON
+    const val LOTTERY_ENTRY_FEE_NANO: Long = 80_000_000L // 0.08 TON
+    const val LOTTERY_TICKET_PRICE_FI_NANO: Long = 100_000_000_000L // 100 FI
+    const val DAO_ADMIN_GAS_NANO: Long = 300_000_000L // 0.3 TON
+    const val UPGRADE_GAS_NANO: Long = 500_000_000L // 0.5 TON
 
     // Auto-funder thresholds (from web useAutoFundFiWallet)
     const val AUTO_FUND_THRESHOLD_NANO: Long = 2_000_000_000L // 2.0 TON

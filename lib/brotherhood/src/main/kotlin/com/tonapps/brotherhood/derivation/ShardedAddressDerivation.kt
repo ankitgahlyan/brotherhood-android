@@ -334,4 +334,60 @@ object ShardedAddressDerivation {
         bareDomain: String,
         collectionAddress: AddrStd = BrotherhoodConfig.BRO_COLLECTION_RESOLVER,
     ): AddrStd = deriveDnsItem(bareDomain, collectionAddress).address
+
+    /**
+     * Derives the sharded Lottery contract address closeTo `minterAddress`.
+     */
+    fun deriveLottery(
+        minterAddress: AddrStd = BrotherhoodConfig.FI_ADDRESS,
+    ): DeployedContractInit {
+        val data = CellBuilder.createCell {
+            storeAddress(minterAddress)
+            storeUInt(0, 32)
+            storeCoins(Coins.ofNano(0L))
+            storeBit(false)
+            storeBit(false)
+        }
+        return calculateDeployedAddress(
+            code = ContractCodeCells.lotteryCode,
+            data = data,
+            splitDepth = BrotherhoodConfig.SHARD_DEPTH,
+            closeTo = minterAddress,
+        )
+    }
+
+    /**
+     * Derives a DAO Poll contract address for a given `proposalId`, sharded closeTo `daoProxyAddress`.
+     */
+    fun derivePoll(
+        proposalId: Long,
+        proposerOwner: AddrStd = BrotherhoodConfig.DAO_PROXY_ADDRESS,
+        daoProxyAddress: AddrStd = BrotherhoodConfig.DAO_PROXY_ADDRESS,
+        fiAddress: AddrStd = BrotherhoodConfig.FI_ADDRESS,
+    ): DeployedContractInit {
+        val addressesCell = CellBuilder.createCell {
+            storeAddress(proposerOwner)
+            storeAddress(daoProxyAddress)
+            storeAddress(fiAddress)
+        }
+        val emptyTarget = CellBuilder.createCell {
+            storeUInt(0, 32)
+        }
+        val data = CellBuilder.createCell {
+            storeUInt(proposalId.toBigInt(), 64)
+            storeRef(addressesCell)
+            storeRef(emptyTarget)
+            storeUInt(0, 33)
+            storeUInt(0, 33)
+            storeUInt(0, 33)
+            storeUInt(0, 32)
+            storeBit(false)
+        }
+        return calculateDeployedAddress(
+            code = ContractCodeCells.pollCode,
+            data = data,
+            splitDepth = BrotherhoodConfig.SHARD_DEPTH,
+            closeTo = daoProxyAddress,
+        )
+    }
 }

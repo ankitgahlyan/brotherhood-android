@@ -160,6 +160,7 @@ include(
     ":apps:wallet:data:plugins",
     ":apps:wallet:data:features",
     ":apps:wallet:data:cache",
+    ":apps:wallet:data:brotherhood",
 
     ":apps:wallet:data:multichain:wallet",
     ":apps:wallet:data:multichain:exchange",
