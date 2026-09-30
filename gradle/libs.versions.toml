@@ -83,7 +83,7 @@ firebase-performance-plugin = "2.0.2"
 okhttp = "5.3.2"
 okio = "3.17.0"
 centrifuge = "0.7.0"
-coil = "3.4.0"
+coil = "3.6.3"
 
 # TON
 chainkit = "0.3.19"
