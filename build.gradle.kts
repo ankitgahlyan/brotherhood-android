@@ -31,9 +31,9 @@ allprojects {
         exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")
         exclude(group = "org.bouncycastle", module = "bcprov-jdk15to18")
         resolutionStrategy {
-            force("org.bouncycastle:bcprov-jdk18on:1.80")
-            force("org.bouncycastle:bcpkix-jdk18on:1.80")
-            force("org.bouncycastle:bcutil-jdk18on:1.80")
+            force("org.bouncycastle:bcprov-jdk18on:1.86")
+            force("org.bouncycastle:bcpkix-jdk18on:1.86")
+            force("org.bouncycastle:bcutil-jdk18on:1.86")
         }
     }
 
