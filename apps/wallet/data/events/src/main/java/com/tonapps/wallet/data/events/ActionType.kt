@@ -1,0 +1,59 @@
+package com.tonapps.wallet.data.events
+
+enum class ActionType {
+    Received,
+    Send,
+    CallContract,
+    NftReceived,
+    NftSend,
+    Swap,
+    DeployContract,
+    DepositStake,
+    JettonMint,
+    AuctionBid,
+    WithdrawStakeRequest,
+    WithdrawStake,
+    DomainRenewal,
+    Unknown,
+    NftPurchase,
+    JettonBurn,
+    UnSubscribe,
+    Subscribe,
+    Fee,
+    Refund,
+    Purchase,
+    GasRelay,
+    RemoveExtension,
+    AddExtension,
+    SetSignatureAllowed,
+    SetSignatureNotAllowed,
+}
+
+val ActionTypeFeeOnly = arrayOf(
+    ActionType.DomainRenewal,
+    ActionType.DeployContract,
+    ActionType.AddExtension,
+    ActionType.RemoveExtension,
+    ActionType.SetSignatureAllowed,
+    ActionType.SetSignatureNotAllowed,
+    ActionType.UnSubscribe
+)
+
+val ActionTypeOut = arrayOf(
+    ActionType.Send,
+    ActionType.CallContract,
+    ActionType.NftSend,
+    ActionType.Swap,
+    ActionType.DeployContract,
+    ActionType.DepositStake,
+    ActionType.JettonMint,
+    ActionType.AuctionBid,
+    ActionType.WithdrawStakeRequest,
+    ActionType.WithdrawStake,
+    ActionType.DomainRenewal,
+    ActionType.NftPurchase,
+    ActionType.JettonBurn,
+    ActionType.UnSubscribe,
+    ActionType.Subscribe,
+    ActionType.Purchase
+)

@@ -1,0 +1,172 @@
+package com.tonapps.deposit.screens.buy.crypto
+
+import com.tonapps.blockchain.model.legacy.WalletCurrency
+import com.tonapps.blockchain.model.legacy.WalletEntity
+import com.tonapps.bus.core.AnalyticsHelper
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowAddFundsOption
+import com.tonapps.bus.generated.Events.DepositFlow.DepositFlowFrom
+import com.tonapps.core.helper.analyticsAssetId
+import com.tonapps.deposit.data.ExchangeRepository
+import com.tonapps.deposit.screens.method.RampAsset
+import com.tonapps.icu.Coins
+import com.tonapps.icu.CurrencyFormatter
+import com.tonapps.log.L
+import com.tonapps.mvi.MviFeature
+import com.tonapps.mvi.contract.MviAction
+import com.tonapps.mvi.contract.MviState
+import com.tonapps.mvi.contract.MviViewState
+import com.tonapps.mvi.props.MviProperty
+import com.tonapps.wallet.data.account.AccountRepository
+import io.exchangeapi.infrastructure.ApiResult
+import io.exchangeapi.models.CreateExchangeRequest
+import io.exchangeapi.models.ExchangeFlow
+
+sealed interface BuyWithCryptoAction : MviAction {
+    data object Init : BuyWithCryptoAction
+}
+
+sealed interface BuyWithCryptoState : MviState {
+    data object Loading : BuyWithCryptoState
+
+    data class Data(
+        val payinAddress: String,
+        val amountExpectedFrom: String,
+        val rate: String?,
+        val fromCode: String,
+        val toCode: String,
+        val minDeposit: String?,
+        val maxDeposit: String?,
+        val network: String?,
+        val memoTitle: String?,
+        val memoValue: String?,
+        val estimatedDurationSeconds: Int?,
+    ) : BuyWithCryptoState
+
+    data class Error(val message: String?) : BuyWithCryptoState
+}
+
+class BuyWithCryptoViewState(
+    val global: MviProperty<BuyWithCryptoState>
+) : MviViewState
+
+data class BuyWithCryptoData(
+    val from: WalletCurrency,
+    val to: RampAsset,
+    val walletId: String? = null,
+)
+
+class BuyWithCryptoFeature(
+    private val data: BuyWithCryptoData,
+    private val onRampRepository: ExchangeRepository,
+    private val accountRepository: AccountRepository,
+) : MviFeature<BuyWithCryptoAction, BuyWithCryptoState, BuyWithCryptoViewState>(
+    initState = BuyWithCryptoState.Loading,
+    initAction = BuyWithCryptoAction.Init
+) {
+
+    private val from: WalletCurrency
+        get() = data.from
+
+    private val to: RampAsset
+        get() = data.to
+
+    init {
+        val addFundsOption = if (to.isTon) {
+            DepositFlowAddFundsOption.BuyTonWithCrypto
+        } else {
+            DepositFlowAddFundsOption.BuyWithStablecoins
+        }
+        AnalyticsHelper.Default.events.depositFlow.depositViewSendAsset(
+            from = DepositFlowFrom.WalletScreen,
+            addFundsOption = addFundsOption,
+            sellAsset = from.analyticsAssetId(),
+            buyAsset = to.toCurrency.analyticsAssetId(),
+        )
+    }
+
+    override fun createViewState(): BuyWithCryptoViewState {
+        return buildViewState {
+            BuyWithCryptoViewState(mviProperty { it })
+        }
+    }
+
+    override suspend fun executeAction(action: BuyWithCryptoAction) {
+        when (action) {
+            is BuyWithCryptoAction.Init -> loadData()
+        }
+    }
+
+    private suspend fun loadData() {
+        try {
+            val wallet = data.walletId?.let { accountRepository.getWalletById(it) }
+                ?: accountRepository.getSelectedWallet()!!
+            val walletAddress = resolveWalletAddress(wallet)
+
+            val networkDisplayName = from.title
+
+            val apiResult = onRampRepository.createExchange(
+                CreateExchangeRequest(
+                    from = from.code,
+                    to = to.currencyCode,
+                    wallet = walletAddress,
+                    fromNetwork = from.network,
+                    toNetwork = to.network,
+                    flow = ExchangeFlow.deposit,
+                )
+            )
+
+            when (apiResult) {
+                is ApiResult.Success -> {
+                    val result = apiResult.data
+                    setState {
+                        BuyWithCryptoState.Data(
+                            payinAddress = result.payinAddress,
+                            amountExpectedFrom = result.amountExpectedFrom,
+                            rate = formatRate(from.code, to.currencyCode, result.rate),
+                            fromCode = from.code,
+                            toCode = to.currencyCode,
+                            minDeposit = result.minDeposit,
+                            maxDeposit = result.maxDeposit,
+                            network = networkDisplayName,
+                            memoTitle = result.extraIdName,
+                            memoValue = result.payinExtraId,
+                            estimatedDurationSeconds = result.estimatedDuration,
+                        )
+                    }
+                }
+                is ApiResult.Error -> {
+                    setState { BuyWithCryptoState.Error(apiResult.message) }
+                }
+            }
+        } catch (e: Throwable) {
+            L.e(e)
+            setState { BuyWithCryptoState.Error(e.message) }
+        }
+    }
+
+    private suspend fun resolveWalletAddress(wallet: WalletEntity): String {
+        val toChain = (to as? RampAsset.Currency)?.currency?.chain
+        return when (toChain) {
+            is WalletCurrency.Chain.TRON -> {
+                accountRepository.getTronAddress(wallet.id) ?: wallet.address
+            }
+
+            else -> wallet.address
+        }
+    }
+
+    // TODO duplication
+    private fun formatRate(
+        fromCode: String,
+        toCode: String,
+        receiveAmountStr: String,
+    ): String? {
+        val receiveAmount = runCatching { Coins.of(receiveAmountStr) }
+            .getOrNull()
+            ?: return null
+
+        val fromFormat = CurrencyFormatter.format(fromCode, Coins.ONE, replaceSymbol = false)
+        val rateFormat = CurrencyFormatter.format(toCode, receiveAmount, replaceSymbol = false)
+        return "$fromFormat ≈ $rateFormat"
+    }
+}
