@@ -1,0 +1,160 @@
+package com.tonapps.brotherhood.config
+
+data class CountryItem(
+    val name: String,
+    val code: Int,
+    val alpha2: String,
+    val flag: String,
+)
+
+object BrotherhoodCountries {
+    val ISO_COUNTRIES: List<CountryItem> = listOf(
+        CountryItem("Global / None", 0, "GL", "🌐"),
+        CountryItem("Afghanistan", 4, "AF", "🇦🇫"),
+        CountryItem("Albania", 8, "AL", "🇦🇱"),
+        CountryItem("Algeria", 12, "DZ", "🇩🇿"),
+        CountryItem("Andorra", 20, "AD", "🇦🇩"),
+        CountryItem("Angola", 24, "AO", "🇦🇴"),
+        CountryItem("Argentina", 32, "AR", "🇦🇷"),
+        CountryItem("Armenia", 51, "AM", "🇦🇲"),
+        CountryItem("Australia", 36, "AU", "🇦🇺"),
+        CountryItem("Austria", 40, "AT", "🇦🇹"),
+        CountryItem("Azerbaijan", 31, "AZ", "🇦🇿"),
+        CountryItem("Bahamas", 44, "BS", "🇧🇸"),
+        CountryItem("Bahrain", 48, "BH", "🇧🇭"),
+        CountryItem("Bangladesh", 50, "BD", "🇧🇩"),
+        CountryItem("Barbados", 52, "BB", "🇧🇧"),
+        CountryItem("Belarus", 112, "BY", "🇧🇾"),
+        CountryItem("Belgium", 56, "BE", "🇧🇪"),
+        CountryItem("Belize", 84, "BZ", "🇧🇿"),
+        CountryItem("Benin", 204, "BJ", "🇧🇯"),
+        CountryItem("Bhutan", 64, "BT", "🇧🇹"),
+        CountryItem("Bolivia", 68, "BO", "🇧🇴"),
+        CountryItem("Bosnia and Herzegovina", 70, "BA", "🇧🇦"),
+        CountryItem("Botswana", 72, "BW", "🇧🇼"),
+        CountryItem("Brazil", 76, "BR", "🇧🇷"),
+        CountryItem("Brunei", 96, "BN", "🇧🇳"),
+        CountryItem("Bulgaria", 100, "BG", "🇧🇬"),
+        CountryItem("Burkina Faso", 854, "BF", "🇧🇫"),
+        CountryItem("Burundi", 108, "BI", "🇧🇮"),
+        CountryItem("Cambodia", 116, "KH", "🇰🇭"),
+        CountryItem("Cameroon", 120, "CM", "🇨🇲"),
+        CountryItem("Canada", 124, "CA", "🇨🇦"),
+        CountryItem("Chile", 152, "CL", "🇨🇱"),
+        CountryItem("China", 156, "CN", "🇨🇳"),
+        CountryItem("Colombia", 170, "CO", "🇨🇴"),
+        CountryItem("Congo", 178, "CG", "🇨🇬"),
+        CountryItem("Costa Rica", 188, "CR", "🇨🇷"),
+        CountryItem("Croatia", 191, "HR", "🇭🇷"),
+        CountryItem("Cuba", 192, "CU", "🇨🇺"),
+        CountryItem("Cyprus", 196, "CY", "🇨🇾"),
+        CountryItem("Czech Republic", 203, "CZ", "🇨🇿"),
+        CountryItem("Denmark", 208, "DK", "🇩🇰"),
+        CountryItem("Dominican Republic", 214, "DO", "🇩🇴"),
+        CountryItem("Ecuador", 218, "EC", "🇪🇨"),
+        CountryItem("Egypt", 818, "EG", "🇪🇬"),
+        CountryItem("El Salvador", 222, "SV", "🇸🇻"),
+        CountryItem("Estonia", 233, "EE", "🇪🇪"),
+        CountryItem("Ethiopia", 231, "ET", "🇪🇹"),
+        CountryItem("Finland", 246, "FI", "🇫🇮"),
+        CountryItem("France", 250, "FR", "🇫🇷"),
+        CountryItem("Georgia", 268, "GE", "🇬🇪"),
+        CountryItem("Germany", 276, "DE", "🇩🇪"),
+        CountryItem("Ghana", 288, "GH", "🇬🇭"),
+        CountryItem("Greece", 300, "GR", "🇬🇷"),
+        CountryItem("Guatemala", 320, "GT", "🇬🇹"),
+        CountryItem("Honduras", 340, "HN", "🇭🇳"),
+        CountryItem("Hong Kong", 344, "HK", "🇭🇰"),
+        CountryItem("Hungary", 348, "HU", "🇭🇺"),
+        CountryItem("Iceland", 352, "IS", "🇮🇸"),
+        CountryItem("India", 356, "IN", "🇮🇳"),
+        CountryItem("Indonesia", 360, "ID", "🇮🇩"),
+        CountryItem("Iran", 364, "IR", "🇮🇷"),
+        CountryItem("Iraq", 368, "IQ", "🇮🇶"),
+        CountryItem("Ireland", 372, "IE", "🇮🇪"),
+        CountryItem("Israel", 376, "IL", "🇮🇱"),
+        CountryItem("Italy", 380, "IT", "🇮🇹"),
+        CountryItem("Jamaica", 388, "JM", "🇯🇲"),
+        CountryItem("Japan", 392, "JP", "🇯🇵"),
+        CountryItem("Jordan", 400, "JO", "🇯🇴"),
+        CountryItem("Kazakhstan", 398, "KZ", "🇰🇿"),
+        CountryItem("Kenya", 404, "KE", "🇰🇪"),
+        CountryItem("Kuwait", 414, "KW", "🇰🇼"),
+        CountryItem("Latvia", 428, "LV", "🇱🇻"),
+        CountryItem("Lebanon", 422, "LB", "🇱🇧"),
+        CountryItem("Lithuania", 440, "LT", "🇱🇹"),
+        CountryItem("Luxembourg", 442, "LU", "🇱🇺"),
+        CountryItem("Malaysia", 458, "MY", "🇲🇾"),
+        CountryItem("Maldives", 462, "MV", "🇲🇻"),
+        CountryItem("Malta", 470, "MT", "🇲🇹"),
+        CountryItem("Mexico", 484, "MX", "🇲🇽"),
+        CountryItem("Monaco", 492, "MC", "🇲🇨"),
+        CountryItem("Mongolia", 496, "MN", "🇲🇳"),
+        CountryItem("Morocco", 504, "MA", "🇲🇦"),
+        CountryItem("Nepal", 524, "NP", "🇳🇵"),
+        CountryItem("Netherlands", 528, "NL", "🇳🇱"),
+        CountryItem("New Zealand", 554, "NZ", "🇳🇿"),
+        CountryItem("Nigeria", 566, "NG", "🇳🇬"),
+        CountryItem("Norway", 578, "NO", "🇳🇴"),
+        CountryItem("Oman", 512, "OM", "🇴🇲"),
+        CountryItem("Pakistan", 586, "PK", "🇵🇰"),
+        CountryItem("Panama", 591, "PA", "🇵🇦"),
+        CountryItem("Paraguay", 600, "PY", "🇵🇾"),
+        CountryItem("Peru", 604, "PE", "🇵🇪"),
+        CountryItem("Philippines", 608, "PH", "🇵🇭"),
+        CountryItem("Poland", 616, "PL", "🇵🇱"),
+        CountryItem("Portugal", 620, "PT", "🇵🇹"),
+        CountryItem("Qatar", 634, "QA", "🇶🇦"),
+        CountryItem("Romania", 642, "RO", "🇷🇴"),
+        CountryItem("Russia", 643, "RU", "🇷🇺"),
+        CountryItem("Saudi Arabia", 682, "SA", "🇸🇦"),
+        CountryItem("Serbia", 688, "RS", "🇷🇸"),
+        CountryItem("Singapore", 702, "SG", "🇸🇬"),
+        CountryItem("Slovakia", 703, "SK", "🇸🇰"),
+        CountryItem("Slovenia", 705, "SI", "🇸🇮"),
+        CountryItem("South Africa", 710, "ZA", "🇿🇦"),
+        CountryItem("South Korea", 410, "KR", "🇰🇷"),
+        CountryItem("Spain", 724, "ES", "🇪🇸"),
+        CountryItem("Sri Lanka", 144, "LK", "🇱🇰"),
+        CountryItem("Sweden", 752, "SE", "🇸🇪"),
+        CountryItem("Switzerland", 756, "CH", "🇨🇭"),
+        CountryItem("Taiwan", 158, "TW", "🇹🇼"),
+        CountryItem("Thailand", 764, "TH", "🇹🇭"),
+        CountryItem("Tunisia", 788, "TN", "🇹🇳"),
+        CountryItem("Turkey", 792, "TR", "🇹🇷"),
+        CountryItem("Ukraine", 804, "UA", "🇺🇦"),
+        CountryItem("United Arab Emirates", 784, "AE", "🇦🇪"),
+        CountryItem("United Kingdom", 826, "GB", "🇬🇧"),
+        CountryItem("United States", 840, "US", "🇺🇸"),
+        CountryItem("Uruguay", 858, "UY", "🇺🇾"),
+        CountryItem("Uzbekistan", 860, "UZ", "🇺🇿"),
+        CountryItem("Venezuela", 862, "VE", "🇻🇪"),
+        CountryItem("Vietnam", 704, "VN", "🇻🇳"),
+    )
+
+    private val BY_CODE: Map<Int, CountryItem> = ISO_COUNTRIES.associateBy { it.code }
+
+    fun getCountryByCode(code: Int?): CountryItem {
+        if (code == null) {
+            return ISO_COUNTRIES.first()
+        }
+        return BY_CODE[code] ?: CountryItem(
+            name = "Country #$code",
+            code = code,
+            alpha2 = "??",
+            flag = "🏳️",
+        )
+    }
+
+    fun searchCountries(query: String): List<CountryItem> {
+        val q = query.trim().lowercase()
+        if (q.isEmpty()) {
+            return ISO_COUNTRIES
+        }
+        return ISO_COUNTRIES.filter {
+            it.name.lowercase().contains(q) ||
+                it.alpha2.lowercase().contains(q) ||
+                it.code.toString().contains(q)
+        }
+    }
+}

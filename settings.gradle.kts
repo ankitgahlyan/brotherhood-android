@@ -21,7 +21,8 @@ val localProperties = Properties().apply {
 
 fun getProperty(key: String): String {
     return localProperties.getProperty(key)
-        ?: throw GradleException("Key `$key` is undefine, Please add it to local.properties!",)
+        ?: System.getenv(key)
+        ?: ""
 }
 
 dependencyResolutionManagement {
@@ -129,6 +130,7 @@ include(
     ":lib:wallet",
     ":lib:wc",
     ":lib:features",
+    ":lib:brotherhood",
 
     ":apps:wallet:instance:app",
     ":apps:wallet:instance:main",
